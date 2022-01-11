@@ -22,17 +22,22 @@ const type_graphql_1 = require("type-graphql");
 const hello_1 = require("./resolvers/hello");
 const post_1 = require("./resolvers/post");
 const user_1 = require("./resolvers/user");
+const cors_1 = __importDefault(require("cors"));
 const redis = require('redis');
 const express_session_1 = __importDefault(require("express-session"));
 const connect_redis_1 = __importDefault(require("connect-redis"));
-const RedisStore = (0, connect_redis_1.default)(express_session_1.default);
-const redisClient = redis.createClient();
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const orm = yield core_1.MikroORM.init(mikro_orm_config_1.default);
     orm.getMigrator().up();
     const app = (0, express_1.default)();
+    const RedisStore = (0, connect_redis_1.default)(express_session_1.default);
+    const redisClient = redis.createClient();
+    app.use((0, cors_1.default)({
+        origin: 'http://localhost:3000',
+        credentials: true,
+    }));
     app.use((0, express_session_1.default)({
-        name: 'siphonlife',
+        name: 'qid',
         store: new RedisStore({
             client: redisClient,
             disableTouch: true,
@@ -41,7 +46,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
             maxAge: 1000 * 60 * 24 * 60 * 365,
             httpOnly: true,
             sameSite: 'lax',
-            secure: constants_1.__prod__
+            secure: constants_1.__prod__,
         },
         saveUninitialized: false,
         secret: 'keyboard cat 420',
@@ -61,10 +66,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     yield apolloServer.start();
     apolloServer.applyMiddleware({
         app,
-        cors: {
-            origin: 'https://studio.apollographql.com',
-            credentials: true,
-        },
+        cors: false,
     });
     app.listen(4000, () => {
         console.log('server start port:4000');
