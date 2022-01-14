@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import {MikroORM } from "@mikro-orm/core";
-import { __prod__ } from "./constants";
-import { Post } from "./entities/Post";
+import { COOKIE_NAME, __prod__ } from "./constants";
 import microConfig from './mikro-orm.config'
 import express from 'express';
 import {ApolloServer} from 'apollo-server-express';
@@ -11,39 +10,39 @@ import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import cors from 'cors';
 
-const redis = require('redis');
+const Redis = require('ioredis');
+
 import session from 'express-session';
 import connectRedis from 'connect-redis'
 
 
 
 const main = async () => {
-    const orm = await MikroORM.init(microConfig);
-    orm.getMigrator().up();
+    const orm = await MikroORM.init(microConfig)
 
     const app = express();
 
     const RedisStore = connectRedis(session);
-    const redisClient = redis.createClient();
+    const redis = new Redis();
 
     
     app.use(cors({
-      origin: 'http://localhost:3000',
+      origin: Array('http://localhost:3000',"https://studio.apollographql.com"),
       credentials: true,
     }));
     
 
     app.use(
         session({
-          name: 'qid',
+          name: COOKIE_NAME,
           store: new RedisStore({ 
-              client: redisClient,
+              client: redis,
               disableTouch: true,
           }),
 
           cookie: {
             maxAge: 1000 * 60 * 24 * 60 * 365,
-            httpOnly:true,
+            httpOnly: true,
             sameSite: 'lax',
             secure:__prod__,
           },
@@ -62,7 +61,7 @@ const main = async () => {
             ],
             validate: false,
         }),
-        context: ({req, res}) => ({ em: orm.em, req, res }),
+        context: ({req, res}) => ({ em: orm.em, req, res, redis }),
     });
 
     await apolloServer.start();

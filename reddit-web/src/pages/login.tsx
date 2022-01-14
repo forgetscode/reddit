@@ -1,6 +1,6 @@
 import React from 'react';
 import {Formik, Form} from 'formik';
-import { Box, Button} from '@chakra-ui/react';
+import { Box, Button, Flex, Link} from '@chakra-ui/react';
 import { Wrapper } from '../components/Wrapper';
 import { InputField } from '../components/InputField';
 import { useMutation } from 'urql';
@@ -9,22 +9,21 @@ import { toErrorMap } from '../utils/toErrorMaps';
 import { useRouter } from 'next/router';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import { withUrqlClient } from 'next-urql';
-
+import NextLink from 'next/link';
 
 
 interface loginProps {
 }
 
 
-
 export const Login: React.FC<loginProps> = ({}) => {
     const router = useRouter();
-    const [, register] = useLoginMutation();
+    const [, login] = useLoginMutation();
     return(
         <Wrapper variant="small">
-            <Formik initialValues={{username:"", password:""}}
+            <Formik initialValues={{usernameOrEmail:"", password:""}}
             onSubmit={async (values, {setErrors}) => {
-                const response = await register(values);
+                const response = await login(values);
                 if (response.data?.login.errors){
                     setErrors(toErrorMap(response.data.login.errors));
                 } else if (response.data?.login.user) {
@@ -35,9 +34,9 @@ export const Login: React.FC<loginProps> = ({}) => {
             {({ isSubmitting }) => (
                 <Form>
                     <InputField
-                        name='username'
-                        placeholder='username'
-                        label='Username'
+                        name='usernameOrEmail'
+                        placeholder='Username Or Email'
+                        label='Username Or Email'
                         />
                     <Box mt={4}>
                     <InputField
@@ -47,6 +46,13 @@ export const Login: React.FC<loginProps> = ({}) => {
                         type="passsword"
                     />
                     </Box>
+                    <Flex>
+                        <NextLink href="/forgot-password">
+                            <Link ml='auto'>
+                            Forgot password?
+                            </Link>
+                        </NextLink>
+                    </Flex>
                     <Button
                         mt={4}
                         colorScheme='teal'
