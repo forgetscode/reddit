@@ -1,7 +1,5 @@
 import 'reflect-metadata';
-import {MikroORM } from "@mikro-orm/core";
 import { COOKIE_NAME, __prod__ } from "./constants";
-import microConfig from './mikro-orm.config'
 import express from 'express';
 import {ApolloServer} from 'apollo-server-express';
 import { buildSchema } from "type-graphql";
@@ -14,24 +12,37 @@ const Redis = require('ioredis');
 
 import session from 'express-session';
 import connectRedis from 'connect-redis'
+import { createConnection } from 'typeorm';
+import { Post } from './entities/Post';
+import { User } from './entities/User';
+import path from "path";
 
 
-
+//rerun for me
+//pls
 const main = async () => {
-    const orm = await MikroORM.init(microConfig)
+    const conn = await createConnection({
+      type: 'postgres',
+      database:'reddit2',
+      username:'forgetscode',
+      password:' ',
+      logging:true,
+      synchronize:false,
+      migrations:[path.join(__dirname, "./migrations/*")],
+      entities:[Post, User],
+    });
+    await conn.runMigrations();
 
     const app = express();
 
     const RedisStore = connectRedis(session);
     const redis = new Redis();
 
-    
     app.use(cors({
       origin: Array('http://localhost:3000',"https://studio.apollographql.com"),
       credentials: true,
     }));
     
-
     app.use(
         session({
           name: COOKIE_NAME,
@@ -61,7 +72,7 @@ const main = async () => {
             ],
             validate: false,
         }),
-        context: ({req, res}) => ({ em: orm.em, req, res, redis }),
+        context: ({req, res}) => ({ req, res, redis }),
     });
 
     await apolloServer.start();
@@ -80,5 +91,3 @@ const main = async () => {
 main().catch(err => {
     console.error(err);
 });
-
-console.log("hello world")
