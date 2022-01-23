@@ -1,5 +1,5 @@
 import { MyContext } from "src/types";
-import { Query, Resolver, Mutation, Arg, Field, Ctx, ObjectType } from "type-graphql";
+import { Query, Resolver, Mutation, Arg, Field, Ctx, ObjectType, FieldResolver, Root } from "type-graphql";
 import { User } from "../entities/User";
 import argon2 from "argon2";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
@@ -27,8 +27,15 @@ class UserResponse{
 
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+    @FieldResolver(() => String)
+    email(@Root() user:User, @Ctx() {req}: MyContext) {
+        if (req.session.userId === user.id) {
+            return user.email;
+        }
+        return "";
+    }
 
     @Mutation(() => UserResponse)
     async changePassword(
@@ -148,7 +155,7 @@ export class UserResolver {
                     email: options.email,
                 }
             ).returning('*').execute();
-            user = result as any;
+            user = result.raw[0];
         }
 
         catch (err) {
@@ -158,7 +165,7 @@ export class UserResolver {
                     errors: [
                         {
                             field: 'username',
-                            message: 'username already taken',
+                            message: 'username or email already taken',
                         },
                     ],
                 };  

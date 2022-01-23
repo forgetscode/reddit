@@ -5,11 +5,7 @@ query Posts($limit:Float!, $cursor: String){
   ) {
       hasMore
       posts{
-      id
-      createdAt
-      updatedAt
-      title
-      textSnippet
+        ...PostSnippet
       }
     }
 }
