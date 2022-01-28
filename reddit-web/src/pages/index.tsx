@@ -1,19 +1,23 @@
 import { withUrqlClient } from "next-urql";
 import { Layout } from "../components/Layout";
-import { usePostsQuery } from "../generated/graphql";
+import { useDeletePostMutation, usePostsQuery} from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
 import { Box, Button, Flex, Heading, IconButton, Link, Stack, Text } from "@chakra-ui/react";
 import NextLink from 'next/link';
 import { useState } from "react";
 import { UpvoteSection } from "../components/UpvoteSection";
+import { DeleteIcon } from "@chakra-ui/icons";
 
 const Index = () => {
     const [variables, setVariables] = useState({ 
         limit:10,
         cursor: null as null | string});
+
     const [{data, fetching}] = usePostsQuery({
         variables,
     });
+
+    const [ , deletePost] = useDeletePostMutation();
 
     if (!fetching && !data) {
         return <div> query failed</div>
@@ -22,25 +26,36 @@ const Index = () => {
     return(
         <Layout>
             <Flex align="center">
-            <Heading>Post Office</Heading> 
-            <NextLink href="/create-post">
-                <Link ml="auto">
-                create post
-                </Link>
-            </NextLink>
             </Flex>
             <br/>
             {fetching && !data ? (
                 <div>loading...</div>
             )   :   (
             <Stack spacing={8} > 
-                {data!.posts.posts.map( (p) => (
-                    <Flex key ={p.id} p={5} shadow='md' borderWidth='1px' borderRadius="md">
+                {data!.posts.posts.map( (p) => !p ? null:(
+                    <Flex key ={p.id} p={5} shadow='md' borderWidth='1px'>
                         <UpvoteSection post = {p} />
-                        <Box>
-                            <Heading fontSize='xl'>{p.title}</Heading>
+                        <Box flex={1}>
+                            <NextLink href="/post/[id]" as={`/post/${p.id}`}>
+                                <Link>
+                                    <Heading fontSize="xl"> { p.title } </Heading>
+                                </Link>
+                            </NextLink>
                             <Text> by: { p.creator.username } </Text>
-                            <Text mt={4}>{p.textSnippet +"..."}</Text>
+                            <Flex>
+                                <Text flex={1} mt={4}>{p.textSnippet +"..."}</Text>
+                                <IconButton 
+                                    ml="auto"
+                                    backgroundColor='red'
+                                    aria-label='Delete Post' 
+                                    icon = {<DeleteIcon size="24px"/>}
+                                    onClick={() => {
+                                        deletePost({
+                                            id:p.id
+                                        })
+                                    }}
+                                />
+                            </Flex>
                         </Box>
                     </Flex>
                 ))}

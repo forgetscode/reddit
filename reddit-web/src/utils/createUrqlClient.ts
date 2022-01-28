@@ -4,12 +4,14 @@ import { LogoutMutation,
          MeQuery, 
          MeDocument, 
          LoginMutation, 
-         RegisterMutation } from "../generated/graphql";
+         RegisterMutation,
+         VoteMutationVariables,
+         DeletePostMutationVariables} from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
 import { pipe, tap } from 'wonka';
-import { Exchange } from 'urql';
+import { Exchange, gql} from 'urql';
 import { useRouter } from "next/router";
-
+import { isServer } from "./isServer";
 
 
 const errorExchange: Exchange = ({ forward }) => (ops$) => {
@@ -24,11 +26,26 @@ const errorExchange: Exchange = ({ forward }) => (ops$) => {
   );
 };
 
-export const createUrqlClient = (ssrExchange: any) => ({
+export const createUrqlClient = (ssrExchange: any, ctx: any) => {
+  let cookie ='';
+  if (isServer()){
+    cookie = ctx.req.headers.cookie;
+  }
+  
+  return {
     url: "http://localhost:4000/graphql",
     fetchOptions: {
       credentials: "include"  as const ,
-      headers: { "X-Forwarded-Proto": "https" },
+      headers: 
+      cookie
+      ?{
+        "X-Forwarded-Proto": "https",
+        cookie
+        }
+        :
+        {
+        "X-Forwarded-Proto": "https"
+        },
     },
     exchanges:[
       dedupExchange,
@@ -43,6 +60,54 @@ export const createUrqlClient = (ssrExchange: any) => ({
         },
         updates: {
           Mutation: {
+            deletePost: (_result, args, cache, info) => {
+              console.log("deleted");
+              cache.invalidate({
+                __typename: "Post",
+                id: (args as DeletePostMutationVariables).id,
+              });
+            },
+            vote: (_result, args, cache, info) => {
+              const {postId, value} = args as VoteMutationVariables;
+              const data = cache.readFragment(
+                gql`
+                  fragment _ on Post {
+                    id
+                    points
+                    voteStatus
+                  }
+                `,
+                { id: postId}
+              );
+
+              if (data) {
+                let newPoints = data.points;
+                let newValue = value;
+                console.log("points old :", data.points, "   ", "status:",value)
+                if (data.voteStatus === value ) {
+                  newPoints = newPoints - value;
+                  newValue = null;
+                }
+                else if (data.voteStatus === null){
+                  newPoints = newPoints +value;
+                  newValue = value;
+                }
+                else {
+                  newPoints = newPoints + 2*value;
+                  newValue = value;
+                }
+                console.log("points:", newPoints, "   ", "status:",newValue)
+
+                cache.writeFragment(
+                  gql`
+                    fragment _ on Post {
+                      points
+                      voteStatus
+                    }
+                  `,{ id: postId, points: newPoints, voteStatus: newValue}
+                );
+              }
+            },
             createPost: (_result, args, cache, info) => {
               const allFields = cache.inspectFields('Query');
               const fieldInfos = allFields.filter((info) => info.fieldName === 'posts');
@@ -97,7 +162,8 @@ export const createUrqlClient = (ssrExchange: any) => ({
       ssrExchange,
       fetchExchange,
       ],
-}) ;
+  };
+};
 
 
 export type MergeMode = 'before' | 'after';

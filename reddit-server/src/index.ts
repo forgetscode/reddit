@@ -18,9 +18,6 @@ import { User } from './entities/User';
 import path from "path";
 import { Upvote } from './entities/Upvote';
 
-
-//rerun for me
-//pls
 const main = async () => {
     const conn = await createConnection({
       type: 'postgres',
