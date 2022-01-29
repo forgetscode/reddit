@@ -1,26 +1,29 @@
 import { withUrqlClient } from "next-urql";
 import { Layout } from "../components/Layout";
-import { useDeletePostMutation, usePostsQuery} from "../generated/graphql";
+import { usePostsQuery} from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
-import { Box, Button, Flex, Heading, IconButton, Link, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Link, Stack, Text } from "@chakra-ui/react";
 import NextLink from 'next/link';
 import { useState } from "react";
 import { UpvoteSection } from "../components/UpvoteSection";
-import { DeleteIcon } from "@chakra-ui/icons";
+import { AlterPostButtons } from "../components/AlterPostButtons";
 
 const Index = () => {
     const [variables, setVariables] = useState({ 
         limit:10,
         cursor: null as null | string});
 
-    const [{data, fetching}] = usePostsQuery({
+    const [{data, error,  fetching}] = usePostsQuery({
         variables,
     });
 
-    const [ , deletePost] = useDeletePostMutation();
-
     if (!fetching && !data) {
-        return <div> query failed</div>
+        return (
+            <>
+                <div> query failed</div>
+                <div> {error?.message}</div>
+            </>
+         );
     }
 
     return(
@@ -33,7 +36,7 @@ const Index = () => {
             )   :   (
             <Stack spacing={8} > 
                 {data!.posts.posts.map( (p) => !p ? null:(
-                    <Flex key ={p.id} p={5} shadow='md' borderWidth='1px'>
+                    <Flex key ={p.id} p={5} shadow='md' borderWidth='1px' bg="white">
                         <UpvoteSection post = {p} />
                         <Box flex={1}>
                             <NextLink href="/post/[id]" as={`/post/${p.id}`}>
@@ -42,19 +45,14 @@ const Index = () => {
                                 </Link>
                             </NextLink>
                             <Text> by: { p.creator.username } </Text>
-                            <Flex>
-                                <Text flex={1} mt={4}>{p.textSnippet +"..."}</Text>
-                                <IconButton 
-                                    ml="auto"
-                                    backgroundColor='red'
-                                    aria-label='Delete Post' 
-                                    icon = {<DeleteIcon size="24px"/>}
-                                    onClick={() => {
-                                        deletePost({
-                                            id:p.id
-                                        })
-                                    }}
-                                />
+                            <Flex maxWidth={700}>
+                                <Text flex={1} mt={4} isTruncated mr={4}>{p.text}</Text>
+                                    <Box ml="auto">
+                                        <AlterPostButtons 
+                                            id={ p.id } 
+                                            creatorId = {p.creator.id}
+                                        />
+                                    </Box>
                             </Flex>
                         </Box>
                     </Flex>

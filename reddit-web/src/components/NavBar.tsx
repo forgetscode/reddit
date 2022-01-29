@@ -3,12 +3,10 @@ import React from 'react'
 import NextLink from 'next/link'
 import { useLogoutMutation, useMeQuery } from '../generated/graphql';
 import { isServer } from '../utils/isServer';
+import { useRouter } from 'next/router';
 
-interface NavBarProps {
-
-}
-
-export const NavBar: React.FC<NavBarProps> = ({}) => {
+export const NavBar= ({}) => {
+    const router = useRouter();
     const [{fetching:logoutFetching}, logout] = useLogoutMutation();
     const [{data, fetching}] = useMeQuery(
         {
@@ -24,10 +22,18 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
         body = (
         <>
             <NextLink href="/login">
-                <Link color='white' mr={2}>Login</Link>
+                <Link color='black' mr={2}
+                bg="white"
+                fontSize={18}
+                border="2px" borderRadius="25px" padding="10px"
+                >Login</Link>
             </NextLink>
             <NextLink href="/register">
-                <Link color='white'>Register</Link>
+                <Link color='black'
+                bg="white"
+                fontSize={18}
+                border="2px" borderRadius="25px" padding="10px"
+                >Register</Link>
             </NextLink>
         </>
         )
@@ -40,13 +46,15 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
                     </Button>
                 </NextLink>
                 <Box mr={2}>{data.me.username}</Box>
-                <Button onClick = {
-                    () => {
-                        logout();
+                <Button onClick = { async () => {
+                        await logout();
+                        router.reload()
                     }
                 } 
                 isLoading={logoutFetching}
-                variant= "link">
+                variant= "link"
+                color="white"
+                >
                 logout
                 </Button>
             </Flex>
@@ -58,7 +66,7 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
             <Flex flex={1} m='auto' align="center" maxW={800}>
                 <NextLink href="/">
                     <Link>
-                        <Heading>
+                        <Heading bg="white" border="2px" borderRadius="25px" padding="10px">
                             Post Office
                         </Heading>
                     </Link>
