@@ -1,3 +1,0 @@
-{
-  "extends": "@flexshopper/flexshopper/es6"
-}
