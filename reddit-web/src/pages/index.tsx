@@ -1,23 +1,24 @@
-import { withUrqlClient } from "next-urql";
+
 import { Layout } from "../components/Layout";
 import { usePostsQuery} from "../generated/graphql";
-import { createUrqlClient } from "../utils/createUrqlClient";
 import { Box, Button, Flex, Heading, Link, Stack, Text } from "@chakra-ui/react";
 import NextLink from 'next/link';
-import { useState } from "react";
 import { UpvoteSection } from "../components/UpvoteSection";
 import { AlterPostButtons } from "../components/AlterPostButtons";
+import { withApollo } from "../utils/withApollo";
+
 
 const Index = () => {
-    const [variables, setVariables] = useState({ 
-        limit:10,
-        cursor: null as null | string});
 
-    const [{data, error,  fetching}] = usePostsQuery({
-        variables,
+    const {data, error,  loading, fetchMore, variables} = usePostsQuery({
+        variables:{
+            limit:10,
+            cursor: null,
+        },
+        notifyOnNetworkStatusChange: true,
     });
 
-    if (!fetching && !data) {
+    if (!loading && !data) {
         return (
             <>
                 <div> query failed</div>
@@ -31,7 +32,7 @@ const Index = () => {
             <Flex align="center">
             </Flex>
             <br/>
-            {fetching && !data ? (
+            {loading && !data ? (
                 <div>loading...</div>
             )   :   (
             <Stack spacing={8} > 
@@ -62,17 +63,19 @@ const Index = () => {
             { data && data.posts.hasMore ? (
                 <Flex>
                 <Button onClick={() => {
-                    setVariables({
-                        limit:variables.limit,
-                        cursor: data.posts.posts[data.posts.posts.length -1].createdAt,
-                    }) 
-                }}isLoading = {fetching} m='auto' my={6}> load more</Button>
+                    fetchMore({
+                        variables: {
+                            limit:variables?.limit,
+                            cursor: data.posts.posts[data.posts.posts.length -1].createdAt,
+                        },
+                    });
+                }}isLoading = {loading} m='auto' my={6}> load more</Button>
                 </Flex>
             ): null}
         </Layout>
     );
 };
 
-export default withUrqlClient(createUrqlClient, {ssr: true})(Index);
+export default withApollo({ssr:true})(Index);
 
 

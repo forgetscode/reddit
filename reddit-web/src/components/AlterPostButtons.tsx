@@ -14,8 +14,8 @@ export const AlterPostButtons: React.FC<AlterPostButtonsProps> = ({
     creatorId
     }) => {
         
-        const [ , deletePost] = useDeletePostMutation();
-        const [{ data: meData }] = useMeQuery();
+        const [  deletePost] = useDeletePostMutation();
+        const { data: meData } = useMeQuery();
 
         if (meData?.me?.id !== creatorId) {
             return null;
@@ -37,8 +37,11 @@ export const AlterPostButtons: React.FC<AlterPostButtonsProps> = ({
                     icon = {<DeleteIcon size="24px"/>}
                     onClick={() => {
                         deletePost({
-                            id
-                        })
+                            variables: {id},
+                            update: (cache) => {
+                                cache.evict({id: "Post:" + id});
+                            }
+                        });
                     }}
                 />
             </Box>

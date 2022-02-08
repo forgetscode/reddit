@@ -1,0 +1,1 @@
+{"c":["pages/index","pages/post/[id]","webpack"],"r":["pages/post/[id]"],"m":["./node_modules/next-apollo/dist/index.es.js","./node_modules/next/dist/build/webpack/loaders/next-client-pages-loader.js?page=%2Fpost%2F%5Bid%5D&absolutePagePath=%2Fhome%2Fforgets_code%2Freact%2Freddit_apollo%2Freddit%2Freddit-web%2Fsrc%2Fpages%2Fpost%2F%5Bid%5D.tsx!","./src/pages/post/[id].tsx"]}

@@ -1,5 +1,7 @@
-import { ThemeProvider, CSSReset, Box } from '@chakra-ui/react'
+import { ThemeProvider, CSSReset } from '@chakra-ui/react'
 import theme from '../theme'
+
+
 
 
 function MyApp({ Component, pageProps }) {
@@ -7,7 +9,6 @@ function MyApp({ Component, pageProps }) {
       <ThemeProvider theme={theme}>
           <CSSReset />
             <Component {...pageProps} />
-          
       </ThemeProvider>
   )
 }
